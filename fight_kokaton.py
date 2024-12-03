@@ -113,7 +113,6 @@ class Score:
         引数 screen: 画面Surface
         """
         screen.blit(self.img, self.rct)
-
 class Beam:
     """
     こうかとんが放つビームに関するクラス
@@ -137,7 +136,6 @@ class Beam:
         if check_bound(self.rct) == (True, True):
             self.rct.move_ip(self.vx, self.vy)
             screen.blit(self.img, self.rct)    
-
 class Explosion:
     """
     爆発エフェクトに関するクラス
@@ -166,7 +164,6 @@ class Explosion:
             screen.blit(self.imgs[self.index], self.rct)
             self.index = (self.index + 1) % len(self.imgs)  # 画像を交互に切り替え
             self.life -= 1
-
 class Bomb:
     """
     爆弾に関するクラス
@@ -197,16 +194,15 @@ class Bomb:
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
 
-
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
-    score = Score()  # スコア表示の初期化
-    beams = []  # ビームのリストを初期化
-    explosions = []  # 爆発エフェクトのリストを初期化
+    score = Score()  
+    beams = []  
+    explosions = []  
     clock = pg.time.Clock()
 
     while True:
@@ -231,52 +227,43 @@ def main():
                 return
 
         # ビームと爆弾の衝突判定
-        for beam in beams[:]:  # リストのコピーを使って安全に削除
+        for beam in beams[:]:  
             for bomb in bombs[:]:
-                if beam.rct.colliderect(bomb.rct):  # 衝突判定
-                    beams.remove(beam)  # ビームをリストから削除
-                    bombs.remove(bomb)  # 爆弾をリストから削除
-                    score.increase()  # スコアを加算
-                    explosions.append(Explosion(bomb.rct.center))  # 爆発エフェクトを追加
+                if beam.rct.colliderect(bomb.rct):  
+                    beams.remove(beam)  
+                    bombs.remove(bomb)  
+                    score.increase()  
+                    explosions.append(Explosion(bomb.rct.center))  
                     bird.change_img(6, screen)
                     pg.display.update()
-                    break  # ビームが1つの爆弾に当たれば次のビームへ
+                    break  
 
-        # **すべての爆弾がなくなった場合、ゲームクリア処理**
+        # すべての爆弾がなくなった場合終わる
         if len(bombs) == 0:
             fonto = pg.font.Font(None, 80)
+            txt = fonto.render("Game Clear!", True, (0, 255, 0))
             screen.blit(txt, [WIDTH // 2 - 200, HEIGHT // 2])
             pg.display.update()
             time.sleep(2)
             return
 
-        # 各ビームの更新
         for beam in beams:
             beam.update(screen)
 
-        # 爆弾の更新
         for bomb in bombs:
             bomb.update(screen)
 
-        # 爆発エフェクトの更新（lifeが0より大きいものだけ残す）
         explosions = [exp for exp in explosions if exp.life > 0]
         for explosion in explosions:
             explosion.update(screen)
 
-        # こうかとんの更新
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
 
-        # スコアの更新
         score.update(screen)
 
         pg.display.update()
         clock.tick(50)
-
-
-
-
-
 
 if __name__ == "__main__":
     pg.init()
