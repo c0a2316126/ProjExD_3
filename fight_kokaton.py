@@ -138,6 +138,34 @@ class Beam:
             self.rct.move_ip(self.vx, self.vy)
             screen.blit(self.img, self.rct)    
 
+class Explosion:
+    """
+    爆発エフェクトに関するクラス
+    """
+    def __init__(self, center: tuple[int, int]):
+        """
+        爆発エフェクトの初期化
+        引数 center：爆発の中心座標
+        """
+        img_original = pg.image.load("fig/explosion.gif")
+        self.imgs = [
+            img_original,
+            pg.transform.flip(img_original, True, True),
+        ]
+        self.rct = self.imgs[0].get_rect()
+        self.rct.center = center
+        self.life = 20  # 爆発の表示時間（フレーム数）
+        self.index = 0  # 表示する画像のインデックス
+
+    def update(self, screen: pg.Surface):
+        """
+        爆発エフェクトの更新処理
+        引数 screen：画面Surface
+        """
+        if self.life > 0:
+            screen.blit(self.imgs[self.index], self.rct)
+            self.index = (self.index + 1) % len(self.imgs)  # 画像を交互に切り替え
+            self.life -= 1
 
 class Bomb:
     """
@@ -178,6 +206,7 @@ def main():
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     score = Score()  # スコア表示の初期化
     beams = []  # ビームのリストを初期化
+    explosions = []  # 爆発エフェクトのリストを初期化
     clock = pg.time.Clock()
 
     while True:
@@ -208,10 +237,12 @@ def main():
                     beams.remove(beam)  # ビームをリストから削除
                     bombs.remove(bomb)  # 爆弾をリストから削除
                     score.increase()  # スコアを加算
+                    explosions.append(Explosion(bomb.rct.center))  # 爆発エフェクトを追加
                     bird.change_img(6, screen)
                     pg.display.update()
                     break  # ビームが1つの爆弾に当たれば次のビームへ
 
+        # **すべての爆弾がなくなった場合、ゲームクリア処理**
         if len(bombs) == 0:
             fonto = pg.font.Font(None, 80)
             screen.blit(txt, [WIDTH // 2 - 200, HEIGHT // 2])
@@ -227,6 +258,11 @@ def main():
         for bomb in bombs:
             bomb.update(screen)
 
+        # 爆発エフェクトの更新（lifeが0より大きいものだけ残す）
+        explosions = [exp for exp in explosions if exp.life > 0]
+        for explosion in explosions:
+            explosion.update(screen)
+
         # こうかとんの更新
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
@@ -236,6 +272,7 @@ def main():
 
         pg.display.update()
         clock.tick(50)
+
 
 
 
