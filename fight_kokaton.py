@@ -176,19 +176,21 @@ def main():
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
-    score = Score()  # Scoreクラスのインスタンスを作成
+    score = Score()  # スコア表示の初期化
+    beams = []  # ビームのリストを初期化
     clock = pg.time.Clock()
 
-    beam = None
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beam = Beam(bird)  # スペースキーでビームを発射
+                # スペースキー押下でビームを発射し、リストに追加
+                beams.append(Beam(bird))
 
         screen.blit(bg_img, [0, 0])
 
+        # こうかとんと爆弾の衝突判定（ゲームオーバー処理）
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
                 bird.change_img(8, screen)
@@ -199,25 +201,43 @@ def main():
                 time.sleep(1)
                 return
 
-        for i, bomb in enumerate(bombs):
-            if beam is not None and beam.rct.colliderect(bomb.rct):
-                beam = None
-                bombs[i] = None
-                bird.change_img(6, screen)
-                score.increase()  # スコアを1点追加
-                pg.display.update()
+        # ビームと爆弾の衝突判定
+        for beam in beams[:]:  # リストのコピーを使って安全に削除
+            for bomb in bombs[:]:
+                if beam.rct.colliderect(bomb.rct):  # 衝突判定
+                    beams.remove(beam)  # ビームをリストから削除
+                    bombs.remove(bomb)  # 爆弾をリストから削除
+                    score.increase()  # スコアを加算
+                    bird.change_img(6, screen)
+                    pg.display.update()
+                    break  # ビームが1つの爆弾に当たれば次のビームへ
 
-        key_lst = pg.key.get_pressed()
-        bird.update(key_lst, screen)
-        bombs = [bomb for bomb in bombs if bomb is not None]
-        for bomb in bombs:
-            bomb.update(screen)
-        if beam is not None:
+        if len(bombs) == 0:
+            fonto = pg.font.Font(None, 80)
+            screen.blit(txt, [WIDTH // 2 - 200, HEIGHT // 2])
+            pg.display.update()
+            time.sleep(2)
+            return
+
+        # 各ビームの更新
+        for beam in beams:
             beam.update(screen)
 
-        score.update(screen)  # スコアを画面に表示
+        # 爆弾の更新
+        for bomb in bombs:
+            bomb.update(screen)
+
+        # こうかとんの更新
+        key_lst = pg.key.get_pressed()
+        bird.update(key_lst, screen)
+
+        # スコアの更新
+        score.update(screen)
+
         pg.display.update()
         clock.tick(50)
+
+
 
 
 
